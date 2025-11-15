@@ -3,7 +3,6 @@ using Unity;
 using Duckov;
 using UnityEngine;
 using SodaCraft.Localizations;
-using HarmonyLib;
 using ItemStatsSystem;
 using System.IO;
 using System.Collections.Generic;
@@ -17,7 +16,6 @@ namespace Helldiver
     {
         public static ModBehaviour Instance;
 
-        public Harmony harmony;
         public static bool canBeThrow=false;
         public bool IsMainBind = false;
         public static String dataPath = GetModPath();
@@ -69,8 +67,6 @@ namespace Helldiver
             SetupStratagemInfo();
             CreateStratagemsPanel();
 
-            harmony = new Harmony("Helldiver");
-            harmony.PatchAll();
         }
 
         private void SetupStratagemInfo()
@@ -169,7 +165,6 @@ namespace Helldiver
 
         void OnDisable()
         {
-            harmony.UnpatchAll("Helldiver");
             ItemAssetsCollection.RemoveDynamicEntry(registryBecanBall);
         }
         void Update()

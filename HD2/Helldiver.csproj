@@ -19,12 +19,6 @@
 		<Reference Include="$(DuckovPath)$(SubPath)SodaLocalization*" />
 	</ItemGroup>
 		<ItemGroup>
-		  <None Remove="0Harmony.dll" />
-		</ItemGroup>
-		<ItemGroup>
-		  <EmbeddedResource Include="0Harmony.dll" />
-		</ItemGroup>
-		<ItemGroup>
 		  <Reference Update="D:\SteamLibrary\steamapps\common\Escape from Duckov\Duckov_Data\Managed\TeamSoda.Duckov.Core.dll">
 		    <Private>False</Private>
 		  </Reference>
