@@ -15,6 +15,6 @@ StratagemReady.cs:信标球呼叫战略配备事件
 
 Unit.cs:工具类，用于调试
 
-
+使用Unity的AssetBundle来载入资源文件
 
 如果看到奇怪的地方多半是犯困的时候神志不清写的。
