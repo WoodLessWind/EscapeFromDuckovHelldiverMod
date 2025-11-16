@@ -1,14 +1,10 @@
 ﻿using System;
-using Unity;
-using Duckov;
 using UnityEngine;
 using SodaCraft.Localizations;
 using ItemStatsSystem;
 using System.IO;
-using System.Collections.Generic;
 using System.Collections;
-using ItemStatsSystem.Items;
-using Unity.VisualScripting;
+
 
 namespace Helldiver
 {
@@ -16,12 +12,13 @@ namespace Helldiver
     {
         public static ModBehaviour Instance;
 
-        public static bool canBeThrow=false;
+        public static bool canBeThrow = false;
         public bool IsMainBind = false;
-        public static String dataPath = GetModPath();
-        public static Item registryBecanBall=null;
+        public static String dataPath = Path.Combine(Unit.GetModPath(), "Prefab");
+        public static Item registryBecanBall = null;
         public static CharacterMainControl mainControl;
         public static ItemAssetsCollection IAC;
+        public static HelldiverAudioManager audioManager;
         public static AssetBundle tempBeaconBallAB;
         public static AssetBundle tempUIAB;
         public static AssetBundle tempEagleOneAB;
@@ -44,7 +41,7 @@ namespace Helldiver
 
 
         public Vector3 panelScale = new Vector3(2, 2, 2);
-        public Vector3 panelPositon = new Vector3(200, 600, 0);
+        public Vector3 panelPositon = new Vector3(200, 800, 0);
 
 
         void Awake()
@@ -66,7 +63,7 @@ namespace Helldiver
             RegistryBecanBall();
             SetupStratagemInfo();
             CreateStratagemsPanel();
-
+            audioManager = gameObject.AddComponent<HelldiverAudioManager>();
         }
 
         private void SetupStratagemInfo()
@@ -102,7 +99,7 @@ namespace Helldiver
             registryBecanBall.SetPrivateField("typeID", 10261026);
             registryBecanBall.SetPrivateField("displayName", "BeaconBall");
             registryBecanBall.Icon = BeaconBallIcon;
-            
+
 
             //SystemLanguage systemLanguage = LocalizationManager.CurrentLanguage;
             //Todo:多语言支持
@@ -182,7 +179,8 @@ namespace Helldiver
             {
                 IsMainBind = true;
                 mainControl = CharacterMainControl.Main;
-                CharacterMainControl.Main.gameObject.AddComponent<AudioListener>();
+                GameCamera.Instance.gameObject.AddComponent<AudioListener>();
+                Unit.PrintAllComponents(GameCamera.Instance.gameObject);
                 Debug.Log("主控制器已加载");
             }
 
@@ -199,7 +197,7 @@ namespace Helldiver
             {
                 canBeThrow = !canBeThrow;
             }
-            if (Input.GetKeyDown(KeyCode.Y)) 
+            if (Input.GetKeyDown(KeyCode.Y))
             {
                 StratagemPanel.RegiStratagemToPanel(gameObjectEagle500);
 
@@ -222,9 +220,11 @@ namespace Helldiver
                 mainControl = CharacterMainControl.Main;
                 Debug.Log(mainControl.name);
             }
-            if (Input.GetKeyDown(KeyCode.K)) 
+            if (Input.GetKeyDown(KeyCode.K))
             {
                 //TODO:加音效，关联起UI和信标球投掷
+                //Unit.PrintLoadedBanks();
+                //Unit.ValidateLoadedEvents();
             }
 
             InterceptBeaconBall(canBeThrow);
@@ -247,7 +247,7 @@ namespace Helldiver
                     {
                         Debug.Log("允许投掷！");
                     }
-                    
+
                 }
             }
         }
@@ -262,16 +262,12 @@ namespace Helldiver
             stratagemPanel.AddComponent<StratagemPanel>();
 
             RectTransform rect = stratagemPanel.GetComponent<RectTransform>();
-            rect.position=panelPositon;
+            rect.position = panelPositon;
             rect.localScale = panelScale;
 
             //stratagemPanel.GetComponent<RectTransform>().position = position;
         }
-        public static String GetModPath()
-        {
-            string gameRoot = Path.GetDirectoryName(Application.dataPath);
-            return Path.Combine(gameRoot, "Duckov_Data", "Mods", "Helldiver", "Prefab");
-        }
+
         public static void LoadAB()
         {
             if (File.Exists(Path.Combine(dataPath, "beaconball.unity3d")))
@@ -301,7 +297,7 @@ namespace Helldiver
                 LeftArrow = tempUIAB.LoadAsset<Sprite>("Arrow_Left.png");
                 RightArrow = tempUIAB.LoadAsset<Sprite>("Arrow_Right.png");
                 StratagemsIconEageRed = tempUIAB.LoadAsset<Sprite>("Eagle_500kg_Bomb_Stratagem_Edge.png");
-                Stratagems500KG=tempUIAB.LoadAsset<Sprite>("Eagle_500kg_Bomb_Stratagem_Icon.png");
+                Stratagems500KG = tempUIAB.LoadAsset<Sprite>("Eagle_500kg_Bomb_Stratagem_Icon.png");
 
             }
             else
@@ -310,12 +306,12 @@ namespace Helldiver
             }
         }
         // 协程：检测手雷是否落地在地形上
-        public static IEnumerator CheckGrenadeLanding(Grenade grenade,Quaternion throwBeaconBallRotation)
+        public static IEnumerator CheckGrenadeLanding(Grenade grenade, Quaternion throwBeaconBallRotation)
         {
             while (grenade != null)
             {
                 RaycastHit hit;
-                if (Physics.Raycast(origin: grenade.transform.position,direction: Vector3.down,hitInfo: out hit,maxDistance: 0.3f ))//maxDistance手雷半径
+                if (Physics.Raycast(origin: grenade.transform.position, direction: Vector3.down, hitInfo: out hit, maxDistance: 0.3f))//maxDistance手雷半径
                 {
                     if (hit.collider is TerrainCollider)
                     {
@@ -344,21 +340,21 @@ namespace Helldiver
                 rb.detectCollisions = false; // 停止碰撞检测
                 rb.isKinematic = true; // 设为运动学刚体（彻底静止）
             }
-            MeshRenderer meshRenderer=grenade.GetComponentInChildren<MeshRenderer>();
+            MeshRenderer meshRenderer = grenade.GetComponentInChildren<MeshRenderer>();
             meshRenderer.enabled = false;
 
             // 3. 创建新预制体（贴合地形表面）
             if (beaconLanded != null)
             {
                 Quaternion rotation = Quaternion.identity;
-                if (Physics.Raycast(grenade.transform.position,Vector3.down,out RaycastHit terrainHit,0.1f))
+                if (Physics.Raycast(grenade.transform.position, Vector3.down, out RaycastHit terrainHit, 0.1f))
                 {
                     rotation = Quaternion.FromToRotation(Vector3.up, terrainHit.normal);
                 }
                 // 实例化预制体
-                GameObject beacon= Instantiate(beaconLanded,grenade.transform.position,rotation);
+                GameObject beacon = Instantiate(beaconLanded, grenade.transform.position, rotation);
                 StratagemReady readyTrigger = beacon.AddComponent<StratagemReady>();
-                readyTrigger.stratagemArivalTime= gameObjectEagle500.GetComponent<StratagemInfo>().stratagemArivalTime;
+                readyTrigger.stratagemArivalTime = gameObjectEagle500.GetComponent<StratagemInfo>().stratagemArivalTime;
                 readyTrigger.EagleOne = eagleOnePrefab;
                 Debug.Log(throwBeaconBallRotation);
                 readyTrigger.throwBeaconBallRotation = throwBeaconBallRotation;
@@ -366,7 +362,6 @@ namespace Helldiver
 
             }
         }
-        
+
     }
 }
- 

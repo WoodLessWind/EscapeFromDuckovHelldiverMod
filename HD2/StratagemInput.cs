@@ -1,10 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
-using System.Collections;
-using System;
-using Duckov;
-
 
 namespace Helldiver
 {
@@ -47,26 +43,30 @@ namespace Helldiver
         private void InputKey(int key)
         {
             inputList.Add(key); // 将按键转换为数字并添加到输入序列
-            // 检查输入是否匹配
-            if (!CheckSequence())
+
+            if (!CheckSequence())//匹配输入
             {
                 Debug.Log("输入错误！已清空序列");
                 SetArrowColorDef();
                 currentInputIndex = 0;
-                inputList.Clear(); // 清空错误输入
+
+                int randomErrorIndex = Random.Range(12, 15);
+                HelldiverAudioManager.Instance.PlaySound(randomErrorIndex);
+                inputList.Clear();
                 return;
             }
             else if (inputList.Count == maxInput)
             {
                 Debug.Log("输入正确！");
-                // 添加成功后的逻辑
-
+                int randomCorrectIndex = Random.Range(8, 12);
+                HelldiverAudioManager.Instance.PlaySound(currentInputIndex);
+                HelldiverAudioManager.Instance.PlaySound(randomCorrectIndex);
                 SetArrowColorDef();
                 currentInputIndex = 0;
                 inputList.Clear();
                 return;
             }
-            StratagemPanel.InputAudios[currentInputIndex].Play();
+            HelldiverAudioManager.Instance.PlaySound(currentInputIndex);//播放对应音效
             arrowList[currentInputIndex].color = stratagemInfo.stratagemArrowInputColor;
             arrowList[currentInputIndex+1].color = stratagemInfo.stratagemArrowNextColor;
             currentInputIndex++;

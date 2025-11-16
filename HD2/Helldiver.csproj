@@ -12,8 +12,8 @@
 		<Reference Include="$(DuckovPath)$(SubPath)ItemStatsSystem.dll">
 		  <Private>False</Private>
 		</Reference>
-		<Reference Include="0Harmony">
-		  <HintPath>0Harmony.dll</HintPath>
+		<Reference Include="FMODUnity">
+		  <HintPath>..\..\..\SteamLibrary\steamapps\common\Escape from Duckov\Duckov_Data\Managed\FMODUnity.dll</HintPath>
 		</Reference>
 		<Reference Include="$(DuckovPath)$(SubPath)Unity*" />
 		<Reference Include="$(DuckovPath)$(SubPath)SodaLocalization*" />

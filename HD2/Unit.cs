@@ -1,7 +1,9 @@
-﻿using ItemStatsSystem;
+﻿using FMODUnity;
+using ItemStatsSystem;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 using System.Text;
 using UnityEngine;
@@ -10,6 +12,11 @@ namespace Helldiver
 {
     public static class Unit
     {
+        public static String GetModPath()
+        {
+            string gameRoot = Path.GetDirectoryName(Application.dataPath);
+            return Path.Combine(gameRoot, "Duckov_Data", "Mods", "Helldiver");
+        }
         public static bool SetPrivateField(this Item item, string fieldName, object value)
         {
             FieldInfo field = typeof(Item).GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
@@ -171,5 +178,58 @@ namespace Helldiver
             }
         }
 
+        public static void PrintLoadedBanks()
+        {
+            FMOD.Studio.System studioSystem = RuntimeManager.StudioSystem;
+            int count=0;
+            // 获取所有加载的Bank句柄
+            studioSystem.getBankCount(out count);
+            FMOD.Studio.Bank[] loadedBanks = new FMOD.Studio.Bank[count];
+            studioSystem.getBankList(out loadedBanks);
+
+            Debug.Log("当前已加载的Bank列表：");
+            for (int i = 0; i < loadedBanks.Length; i++)
+            {
+                string bankName;
+                loadedBanks[i].getPath(out bankName);
+                bool isLoaded = loadedBanks[i].isValid();
+                Debug.Log($"[{i}] 名称: {bankName}, 加载状态: {(isLoaded ? "已加载" : "未加载")}");
+            }
+        }
+        public static void ValidateLoadedEvents()
+        {
+            FMOD.Studio.System studioSystem = RuntimeManager.StudioSystem;
+            int bankCount = 0;
+
+            studioSystem.getBankCount(out bankCount);
+            FMOD.Studio.Bank[] loadedBanks = new FMOD.Studio.Bank[bankCount];
+            studioSystem.getBankList(out loadedBanks);
+
+            Debug.Log("开始验证已加载的Event...");
+
+            for (int bankIndex = 0; bankIndex < loadedBanks.Length; bankIndex++)
+            {
+                FMOD.Studio.Bank bank = loadedBanks[bankIndex];
+                string bankName;
+                bank.getPath(out bankName);
+
+                Debug.Log($"Bank [{bankIndex}]: {bankName} (有效: {bank.isValid()})");
+
+                // 获取当前Bank中的Event数量
+                int eventCount = 0;
+                bank.getEventCount(out eventCount);
+                FMOD.Studio.EventDescription[] events = new FMOD.Studio.EventDescription[eventCount];
+                bank.getEventList(out events);
+
+                for (int eventIndex = 0; eventIndex < events.Length; eventIndex++)
+                {
+                    FMOD.Studio.EventDescription eventDesc = events[eventIndex];
+                    string eventPath = null;
+                    eventDesc.getPath(out eventPath);
+                    bool isLoaded = eventDesc.isValid();
+                    Debug.Log($"  Event [{eventIndex}]: {eventPath} (有效: {isLoaded})");
+                }
+            }
+        }
     }
 }
