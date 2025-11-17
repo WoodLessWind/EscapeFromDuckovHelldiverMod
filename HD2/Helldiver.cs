@@ -4,6 +4,7 @@ using SodaCraft.Localizations;
 using ItemStatsSystem;
 using System.IO;
 using System.Collections;
+using static UnityEngine.Rendering.DebugUI;
 
 
 namespace Helldiver
@@ -22,10 +23,14 @@ namespace Helldiver
         public static AssetBundle tempBeaconBallAB;
         public static AssetBundle tempUIAB;
         public static AssetBundle tempEagleOneAB;
+
+        public static Animator stratagemsPanelAnimator;
+
         public static GameObject preFab;
         public static GameObject beaconLanded;
         public static GameObject stratagemsPanelPrefab;
         public static GameObject stratagemPanel;
+        public static GameObject stratagemPanelSlots;
         public static GameObject gameObjectEagle500;
         public static GameObject eagleOnePrefab;
 
@@ -40,23 +45,22 @@ namespace Helldiver
 
 
 
-        public Vector3 panelScale = new Vector3(2, 2, 2);
-        public Vector3 panelPositon = new Vector3(200, 800, 0);
+        public Vector3 panelScale = new Vector3(1.5f, 1.5f, 1.5f);
+        public Vector3 panelPositon = new Vector3(50f, -175f, 0f);
 
-
+        private static bool isPanelExpanded = false;
         void Awake()
         {
             if (Instance == null)
             {
                 Instance = this;
-                DontDestroyOnLoad(gameObject); // 场景切换时保留
+                DontDestroyOnLoad(gameObject);
             }
             else
             {
-                Destroy(gameObject); // 销毁重复实例
+                Destroy(gameObject);
             }
         }
-
         protected override void OnAfterSetup()
         {
             LoadAB();
@@ -65,27 +69,6 @@ namespace Helldiver
             CreateStratagemsPanel();
             audioManager = gameObject.AddComponent<HelldiverAudioManager>();
         }
-
-        private void SetupStratagemInfo()
-        {
-            gameObjectEagle500 = new GameObject();
-            gameObjectEagle500.name = "Eagle500KG";
-
-            StratagemInfo stratagemInfo = gameObjectEagle500.AddComponent<StratagemInfo>();
-            stratagemInfo.stratagemArrowArray = new int[] { 0, 3, 1, 1, 1 };//↑ → ↓ ↓ ↓
-            stratagemInfo.stratagemArrowCount = stratagemInfo.stratagemArrowArray.Length;
-            stratagemInfo.stratagemName = "Stratagems500KG";
-            stratagemInfo.stratagemDisplayName = "\"飞鹰\"500KG炸弹";
-            stratagemInfo.stratagemIcon = Stratagems500KG;
-            stratagemInfo.stratagemIconEage = StratagemsIconEageRed;
-            stratagemInfo.stratagemArivalTime = 5.0f;
-            Instantiate(gameObjectEagle500);
-            DontDestroyOnLoad(gameObjectEagle500);
-
-
-
-        }
-
         private static void RegistryBecanBall()
         {
             Item prefab = ItemAssetsCollection.GetPrefab(66);
@@ -225,47 +208,102 @@ namespace Helldiver
                 //TODO:加音效，关联起UI和信标球投掷
                 //Unit.PrintLoadedBanks();
                 //Unit.ValidateLoadedEvents();
+                Debug.Log(stratagemPanel.GetComponent<RectTransform>().position);
+                bool enable = !stratagemsPanelAnimator.GetBool("IsEnable");
+                Debug.Log("切换战略配备面板动画状态: " + enable);
+                stratagemsPanelAnimator.SetBool("IsEnable", enable);
             }
 
-            InterceptBeaconBall(canBeThrow);
+            InterceptBeaconBall(canBeThrow);//检测当前手上的物品是否是信标球
 
         }
 
-        public static void InterceptBeaconBall(bool canbethrow)
+        private static void InterceptBeaconBall(bool canbethrow)
         {
             if (mainControl.skillAction.holdItemSkillKeeper.Skill != null)
             {
                 if (mainControl.skillAction.holdItemSkillKeeper.Skill.name == "10261026(Clone)")
                 {
+                    if (!isPanelExpanded)
+                    {
+                        stratagemsPanelAnimator.SetBool("IsEnable", true);
+                        isPanelExpanded = true;
+                    }
+
                     if (!canbethrow)
                     {
+                        
                         mainControl.skillAction.StopAction();
-
                         Debug.Log("不允许投掷！");
+                        return;
                     }
                     else
                     {
-                        Debug.Log("允许投掷！");
+                        Debug.Log("允许投掷");
+                        return;
                     }
-
                 }
             }
+            canbethrow = false;
+            isPanelExpanded = false;
+            stratagemsPanelAnimator.SetBool("IsEnable", false);
         }
 
         public void CreateStratagemsPanel()
         {
 
             Canvas canvas = FindObjectOfType<Canvas>();
-            Unit.PrintAllComponents(stratagemsPanelPrefab);
+            if (canvas == null)
+            {
+                Debug.Log("未找到Canvas，无法创建战略配备面板");
+                return;
+            }
+            Vector2 anchor = new Vector2(0, 1);
+            Vector3 position = Vector3.zero;
+            stratagemPanelSlots =new GameObject("StratagemPanelSlots");
+            stratagemPanelSlots.AddComponent<RectTransform>();
+            stratagemPanelSlots.transform.SetParent(canvas.transform);
 
-            stratagemPanel.transform.SetParent(canvas.transform, false);
+            RectTransform stratagemPanelSlotsRect = stratagemPanelSlots.GetComponent<RectTransform>();
+            stratagemPanelSlotsRect.anchorMin = new Vector2(0, 1);
+            stratagemPanelSlotsRect.anchorMax = new Vector2(0, 1);
+            stratagemPanelSlotsRect.pivot = new Vector2(0, 1);
+
+            stratagemPanel.transform.SetParent(stratagemPanelSlots.transform);
+
+            RectTransform stratagemPanelRect = stratagemPanel.GetComponent<RectTransform>();
+            stratagemPanelRect.anchorMin = new Vector2(0, 1);
+            stratagemPanelRect.anchorMax = new Vector2(0, 1);
+            stratagemPanelSlotsRect.pivot = new Vector2(0, 1);
+            stratagemPanelRect.anchoredPosition = new Vector3(0, 0, 0);
+
             stratagemPanel.AddComponent<StratagemPanel>();
 
-            RectTransform rect = stratagemPanel.GetComponent<RectTransform>();
-            rect.position = panelPositon;
-            rect.localScale = panelScale;
+            stratagemPanelSlotsRect.anchoredPosition = panelPositon;
+            stratagemPanelSlotsRect.localScale = panelScale;
 
-            //stratagemPanel.GetComponent<RectTransform>().position = position;
+            stratagemsPanelAnimator = stratagemPanel.GetComponent<Animator>();
+            stratagemsPanelAnimator.SetBool("IsEnable", false);
+
+            stratagemPanelSlots.gameObject.SetActive(false);
+        }
+        private void SetupStratagemInfo()
+        {
+            gameObjectEagle500 = new GameObject();
+            gameObjectEagle500.name = "Eagle500KG";
+
+            StratagemInfo stratagemInfo = gameObjectEagle500.AddComponent<StratagemInfo>();
+            stratagemInfo.stratagemArrowArray = new int[] { 0, 3, 1, 1, 1 };//↑ → ↓ ↓ ↓
+            stratagemInfo.stratagemArrowCount = stratagemInfo.stratagemArrowArray.Length;
+            stratagemInfo.stratagemName = "Stratagems500KG";
+            stratagemInfo.stratagemDisplayName = "\"飞鹰\"500KG炸弹";
+            stratagemInfo.stratagemIcon = Stratagems500KG;
+            stratagemInfo.stratagemIconEage = StratagemsIconEageRed;
+            stratagemInfo.stratagemArivalTime = 5.0f;
+            Instantiate(gameObjectEagle500);
+            DontDestroyOnLoad(gameObjectEagle500);
+
+            stratagemPanelSlots.gameObject.SetActive(true);
         }
 
         public static void LoadAB()

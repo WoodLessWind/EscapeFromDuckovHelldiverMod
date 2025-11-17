@@ -17,6 +17,7 @@ public class Skill_HelldiverBeaconBall : SkillBase
         {
             return;
         }
+        ModBehaviour.canBeThrow = false;//投出后使标记重置
         Vector3 position = this.fromCharacter.CurrentUsingAimSocket.position;
         Vector3 releasePoint = this.skillReleaseContext.releasePoint;
         float y = releasePoint.y;

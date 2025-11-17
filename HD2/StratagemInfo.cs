@@ -26,7 +26,7 @@ namespace Helldiver
         public Color stratagemArrowDefColor = new Color(0.8f, 0.8f, 0.8f, 1.0f);
 
         enum StratagemArrow
-        {//03111
+        {
             Up=0,
             Down=1,
             Left=2,

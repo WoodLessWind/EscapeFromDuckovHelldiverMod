@@ -61,6 +61,7 @@ namespace Helldiver
                 int randomCorrectIndex = Random.Range(8, 12);
                 HelldiverAudioManager.Instance.PlaySound(currentInputIndex);
                 HelldiverAudioManager.Instance.PlaySound(randomCorrectIndex);
+                ModBehaviour.canBeThrow = true;
                 SetArrowColorDef();
                 currentInputIndex = 0;
                 inputList.Clear();

@@ -16,22 +16,14 @@ namespace Helldiver
         private static Image[] stratagemIcon;
         private static TextMeshProUGUI stratagemDisplayName;
         private static StratagemInfo stratagemInfo;
-        public static AudioSource[] InputAudios;
         void Awake()
         {
             arrowList = GetComponentsInChildren<Image>().Skip(4).ToArray();
             stratagemIcon = GetComponentsInChildren<Image>().Skip(1).Take(3).ToArray();
             stratagemDisplayName= GetComponentInChildren<TextMeshProUGUI>();
-            InputAudios = GetComponentsInChildren<AudioSource>();
-            Debug.Log(InputAudios[0]);
         }
         public static bool RegiStratagemToPanel(GameObject gameObject)
         {
-
-            foreach (var item in InputAudios)
-            {
-                Debug.Log(item.clip.name);
-            }
             stratagemInfo = gameObject.GetComponent<StratagemInfo>();
             stratagemIcon[0].color= stratagemInfo.stratagemBackgroundColorRed;
             stratagemIcon[1].sprite = stratagemInfo.stratagemIconEage;
