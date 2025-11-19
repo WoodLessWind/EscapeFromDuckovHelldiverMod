@@ -17,7 +17,8 @@ namespace Helldiver
         public Image[] arrowList;
         public Sprite stratagemIcon;
         public Sprite stratagemIconEage;
-        
+
+        public GameObject explosivePrefab;
 
         public Color stratagemBackgroundColorRed=new Color(0.29f,0.16f,0.16f,0.7f);
         public Color stratagemIconColor = new Color(1.0f,1.0f,1.0f, 0.7f);

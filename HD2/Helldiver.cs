@@ -5,6 +5,7 @@ using ItemStatsSystem;
 using System.IO;
 using System.Collections;
 using static UnityEngine.Rendering.DebugUI;
+using Duckov.Buildings;
 
 
 namespace Helldiver
@@ -15,6 +16,7 @@ namespace Helldiver
 
         public static bool canBeThrow = false;
         public bool IsMainBind = false;
+
         public static String dataPath = Path.Combine(Unit.GetModPath(), "Prefab");
         public static Item registryBecanBall = null;
         public static CharacterMainControl mainControl;
@@ -23,6 +25,8 @@ namespace Helldiver
         public static AssetBundle tempBeaconBallAB;
         public static AssetBundle tempUIAB;
         public static AssetBundle tempEagleOneAB;
+        public static AssetBundle tempEfxAB;
+        public static BuildingDataCollection buildingDataCollection;
 
         public static Animator stratagemsPanelAnimator;
 
@@ -33,6 +37,8 @@ namespace Helldiver
         public static GameObject stratagemPanelSlots;
         public static GameObject gameObjectEagle500;
         public static GameObject eagleOnePrefab;
+
+        public static GameObject Eagle500EfxPrefab;
 
 
         public static Sprite BeaconBallIcon;
@@ -65,9 +71,10 @@ namespace Helldiver
         {
             LoadAB();
             RegistryBecanBall();
-            SetupStratagemInfo();
             CreateStratagemsPanel();
+            SetupStratagemInfo();
             audioManager = gameObject.AddComponent<HelldiverAudioManager>();
+            buildingDataCollection=BuildingDataCollection.Instance;
         }
         private static void RegistryBecanBall()
         {
@@ -208,10 +215,7 @@ namespace Helldiver
                 //TODO:加音效，关联起UI和信标球投掷
                 //Unit.PrintLoadedBanks();
                 //Unit.ValidateLoadedEvents();
-                Debug.Log(stratagemPanel.GetComponent<RectTransform>().position);
-                bool enable = !stratagemsPanelAnimator.GetBool("IsEnable");
-                Debug.Log("切换战略配备面板动画状态: " + enable);
-                stratagemsPanelAnimator.SetBool("IsEnable", enable);
+                Instantiate(Eagle500EfxPrefab,CharacterMainControl.Main.gameObject.transform);
             }
 
             InterceptBeaconBall(canBeThrow);//检测当前手上的物品是否是信标球
@@ -220,6 +224,11 @@ namespace Helldiver
 
         private static void InterceptBeaconBall(bool canbethrow)
         {
+            if (stratagemPanelSlots.activeSelf == false)//启用面板
+            {
+                stratagemPanelSlots.SetActive(true);
+            }
+
             if (mainControl.skillAction.holdItemSkillKeeper.Skill != null)
             {
                 if (mainControl.skillAction.holdItemSkillKeeper.Skill.name == "10261026(Clone)")
@@ -246,6 +255,7 @@ namespace Helldiver
             }
             canbethrow = false;
             isPanelExpanded = false;
+            stratagemPanelSlots.SetActive(false);
             stratagemsPanelAnimator.SetBool("IsEnable", false);
         }
 
@@ -285,7 +295,7 @@ namespace Helldiver
             stratagemsPanelAnimator = stratagemPanel.GetComponent<Animator>();
             stratagemsPanelAnimator.SetBool("IsEnable", false);
 
-            stratagemPanelSlots.gameObject.SetActive(false);
+            stratagemPanelSlots.gameObject.SetActive(false);//创建后隐藏面板
         }
         private void SetupStratagemInfo()
         {
@@ -300,22 +310,20 @@ namespace Helldiver
             stratagemInfo.stratagemIcon = Stratagems500KG;
             stratagemInfo.stratagemIconEage = StratagemsIconEageRed;
             stratagemInfo.stratagemArivalTime = 5.0f;
-            Instantiate(gameObjectEagle500);
+            stratagemInfo.explosivePrefab = Eagle500EfxPrefab;
             DontDestroyOnLoad(gameObjectEagle500);
 
-            stratagemPanelSlots.gameObject.SetActive(true);
         }
 
         public static void LoadAB()
         {
-            if (File.Exists(Path.Combine(dataPath, "beaconball.unity3d")))
+            if (File.Exists(Path.Combine(dataPath, "EFDHD2MOD")))
             {
                 //加载AssetBundle
                 tempBeaconBallAB = AssetBundle.LoadFromFile(Path.Combine(dataPath, "beaconball.unity3d"));
                 tempUIAB = AssetBundle.LoadFromFile(Path.Combine(dataPath, "ui.unity3d"));
                 tempEagleOneAB = AssetBundle.LoadFromFile(Path.Combine(dataPath, "eagleone.unity3d"));
-                Instantiate(tempBeaconBallAB, Vector3.zero, Quaternion.identity);
-                Instantiate(tempUIAB, Vector3.zero, Quaternion.identity);
+                tempEfxAB = AssetBundle.LoadFromFile(Path.Combine(dataPath, "efx.unity3d"));
 
                 //加载预制体
                 //信标球
@@ -328,14 +336,17 @@ namespace Helldiver
                 //飞鹰本体
                 eagleOnePrefab = tempEagleOneAB.LoadAsset<GameObject>("EagleOne.prefab");
 
+                Eagle500EfxPrefab = tempEfxAB.LoadAsset<GameObject>("efxTest.prefab");
+
+                Unit.ValidateResource(Eagle500EfxPrefab, "efxTest.prefab");
                 //UI图标
                 BeaconBallIcon = tempBeaconBallAB.LoadAsset<Sprite>("Beacon_Ball_Icon.png");
                 UpArrow = tempUIAB.LoadAsset<Sprite>("Arrow_Up.png");
                 DownArrow = tempUIAB.LoadAsset<Sprite>("Arrow_Down.png");
                 LeftArrow = tempUIAB.LoadAsset<Sprite>("Arrow_Left.png");
                 RightArrow = tempUIAB.LoadAsset<Sprite>("Arrow_Right.png");
-                StratagemsIconEageRed = tempUIAB.LoadAsset<Sprite>("Eagle_500kg_Bomb_Stratagem_Edge.png");
                 Stratagems500KG = tempUIAB.LoadAsset<Sprite>("Eagle_500kg_Bomb_Stratagem_Icon.png");
+                StratagemsIconEageRed = tempUIAB.LoadAsset<Sprite>("Eagle_500kg_Bomb_Stratagem_Edge.png");
 
             }
             else
@@ -394,10 +405,11 @@ namespace Helldiver
                 StratagemReady readyTrigger = beacon.AddComponent<StratagemReady>();
                 readyTrigger.stratagemArivalTime = gameObjectEagle500.GetComponent<StratagemInfo>().stratagemArivalTime;
                 readyTrigger.EagleOne = eagleOnePrefab;
+                readyTrigger.explosivePrefab = Eagle500EfxPrefab;
                 Debug.Log(throwBeaconBallRotation);
                 readyTrigger.throwBeaconBallRotation = throwBeaconBallRotation;
                 readyTrigger.CallingEagle();
-
+                
             }
         }
 

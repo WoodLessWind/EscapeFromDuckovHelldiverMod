@@ -12,19 +12,23 @@ namespace Helldiver
         public  GameObject EagleOne;
         public  Quaternion throwBeaconBallRotation;
         public  Vector3 stratagemPosition;
-
+        public GameObject explosivePrefab;
         private Text countdownText;
 
         private float remainingTime;
+
+
         public void CallingEagle()
         {
             Debug.Log(EagleOne);
             Debug.Log(transform.position);
             Debug.Log(throwBeaconBallRotation);
+            
             GameObject temp= Instantiate(EagleOne, transform.position, throwBeaconBallRotation);
             Debug.Log(temp);
             Debug.Log(temp.transform.position);
             Debug.Log(temp.transform.rotation);
+            Instantiate(explosivePrefab,transform.position,transform.rotation);
         }
     }
 }
